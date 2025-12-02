@@ -196,28 +196,30 @@ def publish_3d_boxes(box3d_pub, corners_3d_velos, types):
 
     box3d_pub.publish(marker_array)
 
-def publish_loc(loc_pub, locations):
+def publish_loc(loc_pub, tracker, centers):
     marker_array = MarkerArray()
 
-    marker = Marker()
-    marker.header.frame_id = FRAME_ID
-    marker.header.stamp = rospy.Time.now()
+    for track_id in centers:
+        marker = Marker()
+        marker.header.frame_id = FRAME_ID
+        marker.header.stamp = rospy.Time.now()
 
-    marker.action = Marker.ADD
-    marker.lifetime = rospy.Duration()
-    marker.type = Marker.LINE_STRIP
+        marker.action = Marker.ADD
+        marker.lifetime = rospy.Duration(LIFETIME)
+        marker.type = Marker.LINE_STRIP
+        marker.id = track_id
 
-    marker.scale.x = 0.2
+        marker.scale.x = 0.2
 
-    marker.color.r = 1.0
-    marker.color.g = 0.0
-    marker.color.b = 0.0
-    marker.color.a = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
 
-    marker.points = []
-    for loc in locations:
-        marker.points.append(Point(loc[0], loc[1], 0))
+        marker.points = []
+        for loc in tracker[track_id].locations:
+            marker.points.append(Point(loc[0], loc[1], 0))
 
-    marker_array.markers.append(marker)
+        marker_array.markers.append(marker)
 
     loc_pub.publish(marker_array)
