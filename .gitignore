@@ -1,0 +1,16 @@
+# Build artifacts
+catkin_ws/build/
+catkin_ws/devel/
+
+# Data files
+data/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Temp files
+tmp_doc.md

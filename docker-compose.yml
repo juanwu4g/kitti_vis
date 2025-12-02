@@ -1,0 +1,25 @@
+services:
+  ros:
+    container_name: my_ros_noetic
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my_ros_noetic_image
+    network_mode: "host"
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      # Share X11 socket for GUI
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+      # Mount your Catkin workspace (local → container)
+      - ./catkin_ws:/catkin_ws
+
+      # Mount data folder (optional)
+      - ./data:/data
+
+    # Run as root by default; can switch to non-root user if you prefer
+    stdin_open: true
+    tty: true
+    command: bash
