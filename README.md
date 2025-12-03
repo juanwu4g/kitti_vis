@@ -15,13 +15,7 @@ A ROS-based visualization system for the KITTI dataset that publishes real-time 
 
 ## Demo
 
-<!-- TODO: Add screenshots/GIFs here -->
-<!-- Suggested visuals:
-- RViz showing camera feed with 2D bounding boxes
-- RViz showing point cloud with 3D bounding boxes
-- RViz showing object trajectories
-- Complete RViz setup with all topics
--->
+![KITTI Visualization Demo](/demo.gif)
 
 ## Prerequisites
 
