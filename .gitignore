@@ -1,16 +1,31 @@
 # Build artifacts
 catkin_ws/build/
 catkin_ws/devel/
+catkin_ws/.catkin_workspace
 
-# Data files
+# Data files (KITTI dataset is too large)
 data/
 
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
-# Temp files
+# Temp files and documentation drafts
 tmp_doc.md
+scratch_documentation.md
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

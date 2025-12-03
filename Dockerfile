@@ -20,12 +20,15 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies for kitti2bag
+# Install Python dependencies
 RUN pip3 install --no-cache-dir \
     pillow \
     progressbar2 \
     pykitti \
-    numpy
+    numpy \
+    pandas \
+    jupyterlab \
+    ipywidgets
 
 # Install kitti2bag
 RUN pip3 install --no-cache-dir kitti2bag

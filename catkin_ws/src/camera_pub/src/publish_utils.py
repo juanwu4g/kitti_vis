@@ -212,7 +212,7 @@ def publish_loc(loc_pub, tracker, centers):
         marker.scale.x = 0.2
 
         marker.color.r = 1.0
-        marker.color.g = 0.0
+        marker.color.g = 1.0
         marker.color.b = 0.0
         marker.color.a = 1.0
 
@@ -223,3 +223,55 @@ def publish_loc(loc_pub, tracker, centers):
         marker_array.markers.append(marker)
 
     loc_pub.publish(marker_array)
+
+def publish_dist(dist_pub, minPQDs):   
+    marker_array = MarkerArray()
+
+    for i, (minP, minQ, min_distance) in enumerate(minPQDs):
+        marker = Marker()
+        marker.header.frame_id = FRAME_ID
+        marker.header.stamp = rospy.Time.now()
+
+        marker.id = i
+        marker.action = Marker.ADD
+        marker.lifetime = rospy.Duration(LIFETIME)
+        marker.type = Marker.LINE_STRIP
+
+        marker.color.r = 1.0
+        marker.color.g = 0.0
+        marker.color.b = 1.0
+        marker.color.a = 0.5
+        marker.scale.x = 0.1
+
+        marker.points = []
+        marker.points.append(Point(minP[0], minP[1], 0))
+        marker.points.append(Point(minQ[0], minQ[1], 0))
+
+        marker_array.markers.append(marker)
+
+        text_marker = Marker()
+        text_marker.header.frame_id = FRAME_ID
+        text_marker.header.stamp = rospy.Time.now()
+
+        text_marker.id = i + 1000  # Ensure unique ID
+        text_marker.action = Marker.ADD
+        text_marker.lifetime = rospy.Duration(LIFETIME)
+        text_marker.type = Marker.TEXT_VIEW_FACING
+
+        P = (minP + minQ) / 2  # midpoint
+        text_marker.pose.position.x = P[0]
+        text_marker.pose.position.y = P[1]
+        text_marker.pose.position.z = 0.0
+
+        text_marker.text = f"{min_distance:.2f} m"
+        text_marker.scale.x = 1
+        text_marker.scale.y = 1
+        text_marker.scale.z = 1
+
+        text_marker.color.r = 1.0
+        text_marker.color.g = 0.5
+        text_marker.color.b = 0.0
+        text_marker.color.a = 0.8
+        marker_array.markers.append(text_marker)
+
+    dist_pub.publish(marker_array)

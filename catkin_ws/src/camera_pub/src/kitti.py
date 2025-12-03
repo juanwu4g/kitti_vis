@@ -2,23 +2,15 @@
 from data_utils import *
 from publish_utils import *
 from kitti_util import *
+from misc import *
 import os
 from collections import deque
 
 # use data path from the ros container
 DATA_PATH = '/data/kitti/RawData/2011_09_26/2011_09_26_drive_0005_sync'
-
-def compute_3d_box_cam2(h, w, l, x, y, z, yaw):
-    """
-    Return: 3 x n in cam2 coordinate
-    """
-    R = np.array([[np.cos(yaw), 0, np.sin(yaw)], [0, 1, 0], [-np.sin(yaw), 0, np.cos(yaw)]])
-    x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
-    y_corners = [0, 0, 0, 0, -h, -h, -h, -h]
-    z_corners = [w / 2, -w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2]
-    corners_3d_cam2 = np.dot(R, np.vstack([x_corners, y_corners, z_corners]))
-    corners_3d_cam2 += np.vstack([x, y, z])
-    return corners_3d_cam2
+# ego car dimensions from official KITTI doc
+EGOCAR = np.array([[2.15, 0.9, -1.73], [2.15, -0.9, -1.73], [-1.95, -0.9, -1.73], [-1.95, 0.9, -1.73],
+                    [2.15, 0.9, -0.23], [2.15, -0.9, -0.23], [-1.95, -0.9, -0.23], [-1.95, 0.9, -0.23]])
 
 class Object():
     def __init__(self, center):
@@ -49,7 +41,7 @@ if __name__ == "__main__":
     2. load data / create message
     3. publish message
     '''
-    # 1. create publishers
+    # 1. Create Publishers
     cam_pub = rospy.Publisher("kitti_cam", Image, queue_size=10)
     pcl_pub = rospy.Publisher("kitti_point_cloud", PointCloud2, queue_size=10)
     ego_pub = rospy.Publisher("ego_car_marker", MarkerArray, queue_size=10)
@@ -57,6 +49,7 @@ if __name__ == "__main__":
     gpu_pub = rospy.Publisher("kitti_gps", NavSatFix, queue_size=10)
     box3d_pub = rospy.Publisher("kitti_3d_boxes", MarkerArray, queue_size=10)
     loc_pub = rospy.Publisher('kitti_loc', MarkerArray, queue_size=10)
+    dist_pub = rospy.Publisher('kitti_dist', MarkerArray, queue_size=10)
 
     # initialize cv bridge
     bridge = CvBridge()
@@ -78,7 +71,7 @@ if __name__ == "__main__":
 
 
     while not rospy.is_shutdown():
-        # 2. load data
+        # 2. Load data
         df_tracking = df_tracking[df_tracking.type.isin(['Car', 'Truck', 'Van', 'Tram', 'Pedestrian', 'Cyclist'])]
         boxes_2d = np.array(df_tracking[df_tracking.frame==frame][['bbox_left', 'bbox_top', 'bbox_right', 'bbox_bottom']])
         types = np.array(df_tracking[df_tracking.frame==frame]['type'])
@@ -94,9 +87,12 @@ if __name__ == "__main__":
         
         corners_3d_velos = []
         centers = {}    # store track id: center pairs
+        centers[-1] = np.array([0.0, 0.0])  # ego car center
+        minPQDs = []
         for track_id, box_3d in zip(track_ids, boxes_3d):
             corners_3d_box = compute_3d_box_cam2(*box_3d)
             corners_3d_velo = calib.project_rect_to_velo(corners_3d_box.T)
+            minPQDs.append(min_distance_cuboids(EGOCAR, corners_3d_velo))
             corners_3d_velos.append(corners_3d_velo)
             # mean of 8 * 3 matrix -> mean of x, y, z -> only take x, y
             centers[track_id] = np.mean(corners_3d_velo, axis = 0)[:2]
@@ -122,7 +118,7 @@ if __name__ == "__main__":
         prev_imu_data = imu_data
 
             
-        # 3. publish
+        # 3. Publish
         publish_camera(cam_pub, bridge, img, boxes_2d, types)
         publish_point_cloud(pcl_pub, point_cloud)
         publish_ego_car(ego_pub)
@@ -130,6 +126,7 @@ if __name__ == "__main__":
         publish_gps(gpu_pub, imu_data)
         publish_3d_boxes(box3d_pub, corners_3d_velos, types)
         publish_loc(loc_pub, tracker, centers)
+        publish_dist(dist_pub, minPQDs)
         
         rospy.loginfo("publishing frame %d" %frame)
         rate.sleep()
